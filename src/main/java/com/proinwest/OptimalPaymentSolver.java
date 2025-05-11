@@ -29,7 +29,7 @@ public class OptimalPaymentSolver {
             BigDecimal value = order.value();
             BigDecimal bestCost = value;
             String bestMethod = null;
-            boolean usePoints = false;
+            boolean partialPointUse = false;
             BigDecimal pointsAmount = BigDecimal.ZERO;
 
             // 1. Full payment by one eligible method (max discount)
@@ -43,7 +43,7 @@ public class OptimalPaymentSolver {
                         if (method.getLimit().compareTo(cost) >= 0 && cost.compareTo(bestCost) < 0) {
                             bestCost = cost;
                             bestMethod = methodId;
-                            usePoints = false;
+                            partialPointUse = false;
                         }
                     }
                 }
@@ -58,7 +58,7 @@ public class OptimalPaymentSolver {
                 if (cost.compareTo(bestCost) < 0) {
                     bestCost = cost;
                     bestMethod = "PUNKTY";
-                    usePoints = false;
+                    partialPointUse = false;
                 }
             }
 
@@ -74,7 +74,7 @@ public class OptimalPaymentSolver {
                             if (totalAfterDiscount.compareTo(bestCost) < 0) {
                                 bestCost = totalAfterDiscount;
                                 bestMethod = method.getId();
-                                usePoints = true;
+                                partialPointUse = true;
                                 pointsAmount = maxPointUse;
                             }
                         }
@@ -83,7 +83,7 @@ public class OptimalPaymentSolver {
             }
 
             // Apply payment
-            if (usePoints) {
+            if (partialPointUse) {
                 PaymentMethod method = methodMap.get(bestMethod);
                 BigDecimal finalValue = value.multiply(BigDecimal.valueOf(0.90)).setScale(2, RoundingMode.HALF_UP);
                 BigDecimal restPay = finalValue.subtract(pointsAmount);
@@ -95,7 +95,8 @@ public class OptimalPaymentSolver {
                 method.setLimit(method.getLimit().subtract(restPay));
 
             } else if (bestMethod != null) {
-                BigDecimal discount = value.multiply(BigDecimal.valueOf(methodMap.get(bestMethod).getDiscount())).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal discount = value.multiply(BigDecimal.valueOf(methodMap.get(bestMethod).getDiscount()))
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 BigDecimal toPay = value.subtract(discount);
                 usageMap.get(bestMethod).add(toPay);
                 methodMap.get(bestMethod).setLimit(methodMap.get(bestMethod).getLimit().subtract(toPay));

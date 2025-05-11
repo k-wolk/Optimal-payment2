@@ -36,6 +36,7 @@
     </properties>
 
     <build>
+        <finalName>optimal-payment</finalName>
         <plugins>
 
             <plugin>
